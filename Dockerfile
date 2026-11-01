@@ -1,11 +1,13 @@
 FROM rust:1-slim-trixie AS build
 WORKDIR /app
+ENV SQLX_OFFLINE=true
 
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo 'fn main() {}' > src/main.rs \
     && cargo build --release \
     && rm -rf src
 
+COPY .sqlx ./.sqlx
 COPY src ./src
 RUN touch src/main.rs && cargo build --release
 

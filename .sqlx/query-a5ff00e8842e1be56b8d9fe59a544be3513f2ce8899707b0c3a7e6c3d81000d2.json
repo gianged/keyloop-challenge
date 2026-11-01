@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT b.id\n           FROM service_bay b\n           WHERE b.dealership_id = $1\n             AND NOT EXISTS (\n                 SELECT 1 FROM appointment a\n                 WHERE a.bay_id = b.id\n                   AND a.status = 'confirmed'\n                   AND a.slot && tstzrange($2, $3, '[)'))\n           ORDER BY b.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "service_bay",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a5ff00e8842e1be56b8d9fe59a544be3513f2ce8899707b0c3a7e6c3d81000d2"
+}

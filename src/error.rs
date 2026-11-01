@@ -1,8 +1,19 @@
+use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use serde::Serialize;
+use utoipa::ToSchema;
+
+#[derive(Serialize, ToSchema)]
+pub struct ErrorBody {
+    pub code: &'static str,
+}
 
 pub enum AppError {
     Db(sqlx::Error),
+    Conflict(&'static str),
+    Unprocessable(&'static str),
+    LockTimeout,
 }
 
 impl From<sqlx::Error> for AppError {
@@ -18,17 +29,27 @@ fn db_unavailable(err: &sqlx::Error) -> bool {
     )
 }
 
+fn respond(status: StatusCode, code: &'static str) -> Response {
+    (status, Json(ErrorBody { code })).into_response()
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         match self {
             Self::Db(err) if db_unavailable(&err) => {
                 tracing::error!(error = %err, "database unavailable");
-                (StatusCode::SERVICE_UNAVAILABLE, "service unavailable").into_response()
+                respond(StatusCode::SERVICE_UNAVAILABLE, "service_unavailable")
             }
             Self::Db(err) => {
                 tracing::error!(error = %err, "database error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal error").into_response()
+                respond(StatusCode::INTERNAL_SERVER_ERROR, "internal_error")
             }
+            Self::LockTimeout => {
+                tracing::warn!("dealership lock timeout");
+                respond(StatusCode::SERVICE_UNAVAILABLE, "busy")
+            }
+            Self::Conflict(code) => respond(StatusCode::CONFLICT, code),
+            Self::Unprocessable(code) => respond(StatusCode::UNPROCESSABLE_ENTITY, code),
         }
     }
 }

@@ -5,12 +5,15 @@ edition = "2024"
 
 [dependencies]
 axum = "0.8"
-sqlx = { version = "0.9", default-features = false, features = ["postgres", "runtime-tokio"] }
-tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "signal", "net"] }
+sqlx = { version = "0.9", default-features = false, features = ["postgres", "runtime-tokio", "macros", "uuid", "chrono"] }
+tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "signal", "net", "sync", "time"] }
 tower = "0.5"
 tower-http = { version = "0.7", features = ["trace", "request-id"] }
 tracing = "0"
 tracing-subscriber = { version = "0", features = ["env-filter", "json"] }
-utoipa = "6"
+utoipa = { version = "6", features = ["uuid", "chrono"] }
 utoipa-axum = "0.3"
 utoipa-swagger-ui = { version = "10", features = ["vendored", "axum"] }
+serde = { version = "1", features = ["derive"] }
+uuid = { version = "1", features = ["serde"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }

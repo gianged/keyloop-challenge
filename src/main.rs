@@ -2,6 +2,8 @@ use std::error::Error;
 use std::time::Duration;
 
 use keyloop_challenge::config::Config;
+use keyloop_challenge::domain::SlotGrid;
+use keyloop_challenge::infra::Locks;
 use keyloop_challenge::state::AppState;
 use keyloop_challenge::{api, telemetry};
 use sqlx::PgPool;
@@ -45,7 +47,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "listening");
 
-    let app = api::router(AppState { pool });
+    let state = AppState {
+        pool,
+        locks: Locks::new(Duration::from_millis(config.lock_timeout_ms)),
+        grid: SlotGrid::new(config.slot_step_minutes),
+    };
+    let app = api::router(state);
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
