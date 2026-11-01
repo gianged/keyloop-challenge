@@ -63,6 +63,7 @@ CREATE TABLE appointment (
     status          text NOT NULL DEFAULT 'confirmed',
     idempotency_key text NOT NULL,
     created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT pk_appointment PRIMARY KEY (id),
     CONSTRAINT uq_appointment_customer_id_idempotency_key UNIQUE (customer_id, idempotency_key),
