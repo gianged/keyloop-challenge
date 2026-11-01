@@ -127,3 +127,44 @@ pub async fn find_appointment_by_key(
     .map(Appointment::try_from)
     .transpose()
 }
+
+pub async fn find_appointment_by_id(
+    conn: &mut PgConnection,
+    id: Uuid,
+) -> Result<Option<Appointment>, sqlx::Error> {
+    sqlx::query_as!(
+        AppointmentRow,
+        r#"SELECT id, customer_id, vehicle_id, dealership_id, service_type_id,
+                  bay_id, technician_id,
+                  lower(slot) AS "start!", upper(slot) AS "end!",
+                  status, created_at
+           FROM appointment
+           WHERE id = $1"#,
+        id,
+    )
+    .fetch_optional(conn)
+    .await?
+    .map(Appointment::try_from)
+    .transpose()
+}
+
+pub async fn cancel_appointment(
+    conn: &mut PgConnection,
+    id: Uuid,
+) -> Result<Option<Appointment>, sqlx::Error> {
+    sqlx::query_as!(
+        AppointmentRow,
+        r#"UPDATE appointment
+           SET status = 'cancelled', updated_at = now()
+           WHERE id = $1 AND status = 'confirmed'
+           RETURNING id, customer_id, vehicle_id, dealership_id, service_type_id,
+                     bay_id, technician_id,
+                     lower(slot) AS "start!", upper(slot) AS "end!",
+                     status, created_at"#,
+        id,
+    )
+    .fetch_optional(conn)
+    .await?
+    .map(Appointment::try_from)
+    .transpose()
+}

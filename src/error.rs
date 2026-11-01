@@ -11,6 +11,7 @@ pub struct ErrorBody {
 
 pub enum AppError {
     Db(sqlx::Error),
+    NotFound,
     Conflict(&'static str),
     Unprocessable(&'static str),
     LockTimeout,
@@ -48,6 +49,7 @@ impl IntoResponse for AppError {
                 tracing::warn!("dealership lock timeout");
                 respond(StatusCode::SERVICE_UNAVAILABLE, "busy")
             }
+            Self::NotFound => respond(StatusCode::NOT_FOUND, "not_found"),
             Self::Conflict(code) => respond(StatusCode::CONFLICT, code),
             Self::Unprocessable(code) => respond(StatusCode::UNPROCESSABLE_ENTITY, code),
         }

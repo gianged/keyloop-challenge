@@ -2,6 +2,7 @@ mod appointments;
 mod availability;
 mod dto;
 mod events;
+mod extract;
 mod health;
 
 use axum::Router;
@@ -42,6 +43,8 @@ pub fn router(state: AppState) -> Router {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(health::healthz))
         .routes(routes!(appointments::create))
+        .routes(routes!(appointments::get))
+        .routes(routes!(appointments::cancel))
         .split_for_parts();
 
     let middleware = ServiceBuilder::new()
