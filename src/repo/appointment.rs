@@ -7,10 +7,10 @@ use crate::domain::{Appointment, AppointmentStatus, BookingRequest, Slot};
 const UNIQUE_VIOLATION: &str = "23505";
 const EXCLUSION_VIOLATION: &str = "23P01";
 
-const BAY_OVERLAP: &str = "appointment_bay_no_overlap";
-const TECHNICIAN_OVERLAP: &str = "appointment_technician_no_overlap";
-const VEHICLE_OVERLAP: &str = "appointment_vehicle_no_overlap";
-const IDEMPOTENCY_KEY_UNIQUE: &str = "appointment_idempotency_key_unique";
+const BAY_OVERLAP: &str = "ex_appointment_bay_id_slot";
+const TECHNICIAN_OVERLAP: &str = "ex_appointment_technician_id_slot";
+const VEHICLE_OVERLAP: &str = "ex_appointment_vehicle_id_slot";
+const IDEMPOTENCY_KEY_UNIQUE: &str = "uq_appointment_customer_id_idempotency_key";
 
 pub enum InsertOutcome {
     Created(Appointment),
