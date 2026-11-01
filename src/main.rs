@@ -1,3 +1,55 @@
-fn main() {
-    println!("Hello, world!");
+use std::error::Error;
+use std::time::Duration;
+
+use keyloop_challenge::config::Config;
+use keyloop_challenge::state::AppState;
+use keyloop_challenge::{api, telemetry};
+use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+use tokio::net::TcpListener;
+use tokio::signal::unix::{SignalKind, signal};
+
+const CONNECT_ATTEMPTS: u32 = 10;
+
+async fn shutdown_signal() {
+    let mut term = signal(SignalKind::terminate()).expect("install SIGTERM handler");
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {}
+        _ = term.recv() => {}
+    }
+    tracing::info!("shutdown signal received");
+}
+
+async fn connect_pool(config: &Config) -> Result<PgPool, sqlx::Error> {
+    let options = PgPoolOptions::new().max_connections(config.db_pool_max);
+    let mut attempt = 1;
+    loop {
+        match options.clone().connect(&config.database_url).await {
+            Ok(pool) => return Ok(pool),
+            Err(err) if attempt < CONNECT_ATTEMPTS => {
+                tracing::warn!(attempt, error = %err, "database not ready, retrying");
+                attempt += 1;
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let config = Config::from_env()?;
+    telemetry::init(config.log_format);
+
+    let pool = connect_pool(&config).await?;
+    let listener = TcpListener::bind(config.bind_addr).await?;
+    tracing::info!(addr = %config.bind_addr, "listening");
+
+    let app = api::router(AppState { pool });
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    tracing::info!("stopped");
+    Ok(())
 }

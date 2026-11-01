@@ -7,6 +7,7 @@ edition = "2024"
 axum = "0.8"
 sqlx = { version = "0.9", default-features = false, features = ["postgres", "runtime-tokio"] }
 tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "signal", "net"] }
+tower = "0.5"
 tower-http = { version = "0.7", features = ["trace", "request-id"] }
 tracing = "0"
 tracing-subscriber = { version = "0", features = ["env-filter", "json"] }
