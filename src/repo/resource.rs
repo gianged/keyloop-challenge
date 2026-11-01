@@ -91,3 +91,12 @@ pub async fn find_service_type(
         required_skill: r.required_skill,
     }))
 }
+
+pub async fn dealership_exists(conn: &mut PgConnection, id: Uuid) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM dealership WHERE id = $1) AS "exists!""#,
+        id,
+    )
+    .fetch_one(conn)
+    .await
+}

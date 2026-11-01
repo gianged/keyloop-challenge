@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s AS \"start!\"\n           FROM generate_series($2::timestamptz, $3::timestamptz, $4::bigint * interval '1 second') AS s\n           WHERE s < $3 AND s >= $5\n             AND EXISTS (\n                 SELECT 1 FROM service_bay b\n                 WHERE b.dealership_id = $1\n                   AND NOT EXISTS (\n                       SELECT 1 FROM appointment a\n                       WHERE a.bay_id = b.id\n                         AND a.status = 'confirmed'\n                         AND a.slot && tstzrange(s, s + $6::bigint * interval '1 second', '[)')))\n             AND EXISTS (\n                 SELECT 1 FROM technician t\n                 WHERE t.dealership_id = $1\n                   AND $7 = ANY (t.skills)\n                   AND NOT EXISTS (\n                       SELECT 1 FROM appointment a\n                       WHERE a.technician_id = t.id\n                         AND a.status = 'confirmed'\n                         AND a.slot && tstzrange(s, s + $6::bigint * interval '1 second', '[)')))\n           ORDER BY s",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "start!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8",
+        "Timestamptz",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "22142257f7560ff74dc2f1599c4ccfe6797c0d4d35319c93741c504234567aaa"
+}
