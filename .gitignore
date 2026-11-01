@@ -1,0 +1,22 @@
+# Build artifacts
+/target/
+**/*.rs.bk
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+!.env.example
+
+# Editor configs
+.zed/
+
+# Claude Code
+.claude/
+plans/
+PLAN.md

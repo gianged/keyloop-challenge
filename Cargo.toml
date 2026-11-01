@@ -1,0 +1,15 @@
+[package]
+name = "keyloop-challenge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8"
+sqlx = { version = "0.9", default-features = false, features = ["postgres", "runtime-tokio"] }
+tokio = { version = "1.54", features = ["rt-multi-thread", "macros", "signal", "net"] }
+tower-http = { version = "0.7", features = ["trace", "request-id"] }
+tracing = "0"
+tracing-subscriber = { version = "0", features = ["env-filter", "json"] }
+utoipa = "6"
+utoipa-axum = "0.3"
+utoipa-swagger-ui = { version = "10", features = ["vendored", "axum"] }
