@@ -4,7 +4,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use sqlx::PgConnection;
 use uuid::Uuid;
 
-#[warn(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 pub async fn open_starts(
     conn: &mut PgConnection,
     dealership_id: Uuid,
