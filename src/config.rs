@@ -26,6 +26,8 @@ pub struct Config {
     pub database_url: String,
     pub bind_addr: SocketAddr,
     pub db_pool_max: u32,
+    pub slot_step_minutes: u32,
+    pub lock_timeout_ms: u64,
     pub log_format: LogFormat,
 }
 
@@ -40,10 +42,16 @@ where
 
 impl Config {
     pub fn from_env() -> Result<Self, String> {
+        let slot_step_minutes: u32 = optional("SLOT_STEP_MINUTES", "30")?;
+        if slot_step_minutes == 0 {
+            return Err("SLOT_STEP_MINUTES: must be greater than 0".to_owned());
+        }
         Ok(Self {
             database_url: env::var("DATABASE_URL").map_err(|_| "DATABASE_URL: not set")?,
             bind_addr: optional("BIND_ADDR", "0.0.0.0:8080")?,
             db_pool_max: optional("DB_POOL_MAX", "10")?,
+            slot_step_minutes,
+            lock_timeout_ms: optional("LOCK_TIMEOUT_MS", "2000")?,
             log_format: optional("LOG_FORMAT", "pretty")?,
         })
     }

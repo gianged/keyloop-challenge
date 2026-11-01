@@ -41,6 +41,7 @@ fn request_span(req: &Request<Body>) -> Span {
 pub fn router(state: AppState) -> Router {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(health::healthz))
+        .routes(routes!(appointments::create))
         .split_for_parts();
 
     let middleware = ServiceBuilder::new()

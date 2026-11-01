@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT t.id\n           FROM technician t\n           WHERE t.dealership_id = $1\n             AND $2 = ANY (t.skills)\n             AND NOT EXISTS (\n                 SELECT 1 FROM appointment a\n                 WHERE a.technician_id = t.id\n                   AND a.status = 'confirmed'\n                   AND a.slot && tstzrange($3, $4, '[)'))\n           ORDER BY t.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "technician",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "99769338fcc6b7cd3c2a258dbc9ee90a3fd2dd67d9525795052c70ff4204c0b9"
+}
