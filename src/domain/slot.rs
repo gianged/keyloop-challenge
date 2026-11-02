@@ -27,6 +27,10 @@ impl SlotGrid {
         }
     }
 
+    pub fn step(&self) -> TimeDelta {
+        TimeDelta::seconds(self.step_seconds)
+    }
+
     pub fn is_aligned(&self, start: DateTime<Utc>) -> bool {
         start.timestamp_subsec_nanos() == 0 && start.timestamp().rem_euclid(self.step_seconds) == 0
     }
