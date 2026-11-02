@@ -44,20 +44,6 @@ pub async fn load_seed(pool: &PgPool) {
         .unwrap();
 }
 
-pub fn new_locks() -> Locks {
-    Locks::new(Duration::from_secs(2))
-}
-
-pub fn app_with_locks(pool: PgPool, locks: Locks) -> Router {
-    api::router(AppState {
-        pool,
-        locks,
-        grid: SlotGrid::new(30),
-        bus: EventBus::new(),
-        shutdown: CancellationToken::new(),
-    })
-}
-
 pub async fn add_customers_with_vehicles(pool: &PgPool, count: usize) -> Vec<(Uuid, Uuid)> {
     let mut pairs = Vec::with_capacity(count);
     for i in 0..count {
@@ -96,15 +82,29 @@ pub fn app_with_shutdown(pool: PgPool) -> (Router, CancellationToken) {
     (router, shutdown)
 }
 
+pub fn new_locks() -> Locks {
+    Locks::new(Duration::from_secs(2))
+}
+
+pub fn app_with_locks(pool: PgPool, locks: Locks) -> Router {
+    api::router(AppState {
+        pool,
+        locks,
+        grid: SlotGrid::new(30),
+        bus: EventBus::new(),
+        shutdown: CancellationToken::new(),
+    })
+}
+
+pub fn tomorrow_date() -> String {
+    tomorrow_at(0).date_naive().to_string()
+}
+
 pub fn tomorrow_at(hour: u32) -> DateTime<Utc> {
     (Utc::now().date_naive() + Days::new(1))
         .and_hms_opt(hour, 0, 0)
         .unwrap()
         .and_utc()
-}
-
-pub fn tomorrow_date() -> String {
-    tomorrow_at(0).date_naive().to_string()
 }
 
 pub fn booking(

@@ -23,17 +23,6 @@ impl From<sqlx::Error> for AppError {
     }
 }
 
-fn db_unavailable(err: &sqlx::Error) -> bool {
-    matches!(
-        err,
-        sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed | sqlx::Error::Io(_)
-    )
-}
-
-fn respond(status: StatusCode, code: &'static str) -> Response {
-    (status, Json(ErrorBody { code })).into_response()
-}
-
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         match self {
@@ -54,4 +43,15 @@ impl IntoResponse for AppError {
             Self::Unprocessable(code) => respond(StatusCode::UNPROCESSABLE_ENTITY, code),
         }
     }
+}
+
+fn db_unavailable(err: &sqlx::Error) -> bool {
+    matches!(
+        err,
+        sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed | sqlx::Error::Io(_)
+    )
+}
+
+fn respond(status: StatusCode, code: &'static str) -> Response {
+    (status, Json(ErrorBody { code })).into_response()
 }

@@ -10,20 +10,6 @@ use uuid::Uuid;
 
 const STEPS_PER_DAY: usize = 48;
 
-fn availability(dealership: Uuid, service: Uuid, date: &str) -> Request<Body> {
-    get(&format!(
-        "/dealerships/{dealership}/availability?service_type_id={service}&date={date}"
-    ))
-}
-
-fn starts(body: &Value) -> Vec<DateTime<Utc>> {
-    body.as_array()
-        .unwrap()
-        .iter()
-        .map(|slot| slot["start"].as_str().unwrap().parse().unwrap())
-        .collect()
-}
-
 #[sqlx::test(migrations = false)]
 async fn empty_dealership_offers_full_day(pool: PgPool) {
     load_seed(&pool).await;
@@ -150,4 +136,18 @@ async fn late_booking_blocks_next_day_starts(pool: PgPool) {
     let open = starts(&listed);
     assert_eq!(open.len(), STEPS_PER_DAY - 3);
     assert_eq!(open[0], next_day + TimeDelta::minutes(90));
+}
+
+fn availability(dealership: Uuid, service: Uuid, date: &str) -> Request<Body> {
+    get(&format!(
+        "/dealerships/{dealership}/availability?service_type_id={service}&date={date}"
+    ))
+}
+
+fn starts(body: &Value) -> Vec<DateTime<Utc>> {
+    body.as_array()
+        .unwrap()
+        .iter()
+        .map(|slot| slot["start"].as_str().unwrap().parse().unwrap())
+        .collect()
 }

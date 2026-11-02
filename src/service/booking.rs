@@ -28,6 +28,44 @@ pub struct Booking {
     pub outcome: Outcome,
 }
 
+#[tracing::instrument(skip_all, fields(dealership_id = %req.dealership_id))]
+pub async fn book(state: &AppState, req: BookingRequest) -> Result<Booking, AppError> {
+    validate_start(state.grid, &req)?;
+
+    let waiting = Instant::now();
+    let _guard = state
+        .locks
+        .acquire(req.dealership_id)
+        .await
+        .map_err(|_| AppError::LockTimeout)?;
+    let lock_wait_ms = waiting.elapsed().as_millis();
+
+    let working = Instant::now();
+    let mut attempts = 0;
+    let result = place(&state.pool, &req, &mut attempts).await;
+    let tx_ms = working.elapsed().as_millis();
+
+    if let Ok(Booking {
+        appointment,
+        outcome: Outcome::Created,
+    }) = &result
+    {
+        state
+            .bus
+            .publish(appointment.dealership_id, Event::booked(appointment));
+    }
+
+    let outcome = match &result {
+        Ok(booking) => Some(booking.outcome.label()),
+        Err(AppError::Conflict(_)) => Some("unavailable"),
+        Err(_) => None,
+    };
+    if let Some(outcome) = outcome {
+        tracing::info!(lock_wait_ms, tx_ms, attempts, outcome, "booking finished");
+    }
+    result
+}
+
 fn validate_start(grid: SlotGrid, req: &BookingRequest) -> Result<(), AppError> {
     if !grid.is_aligned(req.start) {
         return Err(AppError::Unprocessable("start_off_grid"));
@@ -36,24 +74,6 @@ fn validate_start(grid: SlotGrid, req: &BookingRequest) -> Result<(), AppError> 
         return Err(AppError::Unprocessable("start_in_past"));
     }
     Ok(())
-}
-
-async fn find_replay(
-    conn: &mut PgConnection,
-    req: &BookingRequest,
-) -> Result<Option<Booking>, AppError> {
-    let Some(existing) =
-        repo::find_appointment_by_key(conn, req.customer_id, &req.idempotency_key).await?
-    else {
-        return Ok(None);
-    };
-    if !existing.matches(req) {
-        return Err(AppError::Unprocessable("idempotency_key_reused"));
-    }
-    Ok(Some(Booking {
-        appointment: existing,
-        outcome: Outcome::Replay,
-    }))
 }
 
 async fn place(
@@ -117,40 +137,20 @@ async fn place(
     Err(AppError::Conflict("slot_unavailable"))
 }
 
-#[tracing::instrument(skip_all, fields(dealership_id = %req.dealership_id))]
-pub async fn book(state: &AppState, req: BookingRequest) -> Result<Booking, AppError> {
-    validate_start(state.grid, &req)?;
-
-    let waiting = Instant::now();
-    let _guard = state
-        .locks
-        .acquire(req.dealership_id)
-        .await
-        .map_err(|_| AppError::LockTimeout)?;
-    let lock_wait_ms = waiting.elapsed().as_millis();
-
-    let working = Instant::now();
-    let mut attempts = 0;
-    let result = place(&state.pool, &req, &mut attempts).await;
-    let tx_ms = working.elapsed().as_millis();
-
-    if let Ok(Booking {
-        appointment,
-        outcome: Outcome::Created,
-    }) = &result
-    {
-        state
-            .bus
-            .publish(appointment.dealership_id, Event::booked(appointment));
-    }
-
-    let outcome = match &result {
-        Ok(booking) => Some(booking.outcome.label()),
-        Err(AppError::Conflict(_)) => Some("unavailable"),
-        Err(_) => None,
+async fn find_replay(
+    conn: &mut PgConnection,
+    req: &BookingRequest,
+) -> Result<Option<Booking>, AppError> {
+    let Some(existing) =
+        repo::find_appointment_by_key(conn, req.customer_id, &req.idempotency_key).await?
+    else {
+        return Ok(None);
     };
-    if let Some(outcome) = outcome {
-        tracing::info!(lock_wait_ms, tx_ms, attempts, outcome, "booking finished");
+    if !existing.matches(req) {
+        return Err(AppError::Unprocessable("idempotency_key_reused"));
     }
-    result
+    Ok(Some(Booking {
+        appointment: existing,
+        outcome: Outcome::Replay,
+    }))
 }

@@ -6,36 +6,6 @@ use tokio::sync::OwnedMutexGuard;
 use tokio::time;
 use uuid::Uuid;
 
-#[derive(Debug)]
-pub struct LockTimeout;
-
-struct Inner {
-    entries: Mutex<HashMap<Uuid, Arc<tokio::sync::Mutex<()>>>>,
-    timeout: Duration,
-}
-
-impl Inner {
-    fn prune(&self, key: Uuid) {
-        let mut entries = self.entries.lock().unwrap_or_else(PoisonError::into_inner);
-        if entries.get(&key).is_some_and(|e| Arc::strong_count(e) == 1) {
-            entries.remove(&key);
-        }
-    }
-}
-
-pub struct LockGuard {
-    guard: Option<OwnedMutexGuard<()>>,
-    inner: Arc<Inner>,
-    key: Uuid,
-}
-
-impl Drop for LockGuard {
-    fn drop(&mut self) {
-        self.guard.take();
-        self.inner.prune(self.key);
-    }
-}
-
 #[derive(Clone)]
 pub struct Locks {
     inner: Arc<Inner>,
@@ -70,6 +40,36 @@ impl Locks {
                 self.inner.prune(key);
                 Err(LockTimeout)
             }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct LockTimeout;
+
+pub struct LockGuard {
+    guard: Option<OwnedMutexGuard<()>>,
+    inner: Arc<Inner>,
+    key: Uuid,
+}
+
+impl Drop for LockGuard {
+    fn drop(&mut self) {
+        self.guard.take();
+        self.inner.prune(self.key);
+    }
+}
+
+struct Inner {
+    entries: Mutex<HashMap<Uuid, Arc<tokio::sync::Mutex<()>>>>,
+    timeout: Duration,
+}
+
+impl Inner {
+    fn prune(&self, key: Uuid) {
+        let mut entries = self.entries.lock().unwrap_or_else(PoisonError::into_inner);
+        if entries.get(&key).is_some_and(|e| Arc::strong_count(e) == 1) {
+            entries.remove(&key);
         }
     }
 }

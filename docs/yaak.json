@@ -1,0 +1,357 @@
+{
+  "yaakSchema": 5,
+  "yaakVersion": "2025.1.0",
+  "resources": {
+    "workspaces": [
+      {
+        "model": "workspace",
+        "id": "GENERATE_ID::WORKSPACE_1",
+        "name": "Unified Service Scheduler",
+        "description": "Seed data from database/seed.sql. Edit `start` and `date` in the environment, then resend the booking."
+      }
+    ],
+    "environments": [
+      {
+        "model": "environment",
+        "id": "GENERATE_ID::ENVIRONMENT_1",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "name": "Local",
+        "public": true,
+        "parentModel": "workspace",
+        "parentId": null,
+        "color": null,
+        "sortPriority": 0,
+        "variables": [
+          { "enabled": true, "name": "base_url", "value": "http://localhost:8080" },
+          { "enabled": true, "name": "date", "value": "2026-11-03" },
+          { "enabled": true, "name": "start", "value": "2026-11-03T10:00:00Z" },
+          { "enabled": true, "name": "d1", "value": "00000000-0000-7000-8000-000000000101" },
+          { "enabled": true, "name": "d2", "value": "00000000-0000-7000-8000-000000000102" },
+          { "enabled": true, "name": "svc_oil", "value": "00000000-0000-7000-8000-000000000201" },
+          { "enabled": true, "name": "svc_brakes", "value": "00000000-0000-7000-8000-000000000202" },
+          { "enabled": true, "name": "svc_inspection", "value": "00000000-0000-7000-8000-000000000203" },
+          { "enabled": true, "name": "customer1", "value": "00000000-0000-7000-8000-000000000501" },
+          { "enabled": true, "name": "customer2", "value": "00000000-0000-7000-8000-000000000502" },
+          { "enabled": true, "name": "vehicle1", "value": "00000000-0000-7000-8000-000000000601" },
+          { "enabled": true, "name": "vehicle2", "value": "00000000-0000-7000-8000-000000000602" },
+          { "enabled": true, "name": "vehicle3", "value": "00000000-0000-7000-8000-000000000603" },
+          { "enabled": true, "name": "appointment_id", "value": "00000000-0000-7000-8000-000000000701" }
+        ]
+      }
+    ],
+    "folders": [
+      { "model": "folder", "id": "GENERATE_ID::FOLDER_1", "workspaceId": "GENERATE_ID::WORKSPACE_1", "folderId": null, "name": "Health", "sortPriority": 0 },
+      { "model": "folder", "id": "GENERATE_ID::FOLDER_2", "workspaceId": "GENERATE_ID::WORKSPACE_1", "folderId": null, "name": "Availability", "sortPriority": 1 },
+      { "model": "folder", "id": "GENERATE_ID::FOLDER_3", "workspaceId": "GENERATE_ID::WORKSPACE_1", "folderId": null, "name": "Appointments", "sortPriority": 2 },
+      { "model": "folder", "id": "GENERATE_ID::FOLDER_4", "workspaceId": "GENERATE_ID::WORKSPACE_1", "folderId": null, "name": "Events (SSE)", "sortPriority": 3 },
+      { "model": "folder", "id": "GENERATE_ID::FOLDER_5", "workspaceId": "GENERATE_ID::WORKSPACE_1", "folderId": null, "name": "Error cases", "sortPriority": 4 }
+    ],
+    "httpRequests": [
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_1",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_1",
+        "name": "Healthz",
+        "method": "GET",
+        "url": "${[ base_url ]}/healthz",
+        "sortPriority": 0,
+        "headers": [],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_2",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_2",
+        "name": "D1 oil change",
+        "method": "GET",
+        "url": "${[ base_url ]}/dealerships/${[ d1 ]}/availability",
+        "sortPriority": 1,
+        "headers": [],
+        "urlParameters": [
+          { "enabled": true, "name": "service_type_id", "value": "${[ svc_oil ]}" },
+          { "enabled": true, "name": "date", "value": "${[ date ]}" }
+        ],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_3",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_2",
+        "name": "D1 brakes",
+        "method": "GET",
+        "url": "${[ base_url ]}/dealerships/${[ d1 ]}/availability",
+        "sortPriority": 2,
+        "headers": [],
+        "urlParameters": [
+          { "enabled": true, "name": "service_type_id", "value": "${[ svc_brakes ]}" },
+          { "enabled": true, "name": "date", "value": "${[ date ]}" }
+        ],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_4",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_2",
+        "name": "D1 inspection",
+        "method": "GET",
+        "url": "${[ base_url ]}/dealerships/${[ d1 ]}/availability",
+        "sortPriority": 3,
+        "headers": [],
+        "urlParameters": [
+          { "enabled": true, "name": "service_type_id", "value": "${[ svc_inspection ]}" },
+          { "enabled": true, "name": "date", "value": "${[ date ]}" }
+        ],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_5",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_2",
+        "name": "D2 oil change (scarce)",
+        "method": "GET",
+        "url": "${[ base_url ]}/dealerships/${[ d2 ]}/availability",
+        "sortPriority": 4,
+        "headers": [],
+        "urlParameters": [
+          { "enabled": true, "name": "service_type_id", "value": "${[ svc_oil ]}" },
+          { "enabled": true, "name": "date", "value": "${[ date ]}" }
+        ],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_6",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Book oil - D1, customer 1, vehicle 1",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 5,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer1 ]}\",\n  \"vehicle_id\": \"${[ vehicle1 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_oil ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_7",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Book brakes - D1, customer 1, vehicle 2",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 6,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer1 ]}\",\n  \"vehicle_id\": \"${[ vehicle2 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_brakes ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_8",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Book inspection - D1, customer 2, vehicle 3",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 7,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer2 ]}\",\n  \"vehicle_id\": \"${[ vehicle3 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_inspection ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_9",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Book oil - D2, customer 2, vehicle 3",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 8,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer2 ]}\",\n  \"vehicle_id\": \"${[ vehicle3 ]}\",\n  \"dealership_id\": \"${[ d2 ]}\",\n  \"service_type_id\": \"${[ svc_oil ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_10",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Book oil - fixed key (replay -> 200)",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 9,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "yaak-replay-1" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer1 ]}\",\n  \"vehicle_id\": \"${[ vehicle1 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_oil ]}\",\n  \"start\": \"2026-11-04T10:00:00Z\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_11",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Get appointment",
+        "method": "GET",
+        "url": "${[ base_url ]}/appointments/${[ appointment_id ]}",
+        "sortPriority": 10,
+        "headers": [],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_12",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_3",
+        "name": "Cancel appointment",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments/${[ appointment_id ]}/cancel",
+        "sortPriority": 11,
+        "headers": [],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_13",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_4",
+        "name": "Stream D1 events",
+        "method": "GET",
+        "url": "${[ base_url ]}/dealerships/${[ d1 ]}/events",
+        "sortPriority": 12,
+        "headers": [
+          { "enabled": true, "name": "Accept", "value": "text/event-stream" }
+        ],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_14",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_5",
+        "name": "422 missing Idempotency-Key",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 13,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer1 ]}\",\n  \"vehicle_id\": \"${[ vehicle1 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_oil ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_15",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_5",
+        "name": "422 off-grid start (10:07)",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 14,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer1 ]}\",\n  \"vehicle_id\": \"${[ vehicle1 ]}\",\n  \"dealership_id\": \"${[ d1 ]}\",\n  \"service_type_id\": \"${[ svc_oil ]}\",\n  \"start\": \"2026-11-03T10:07:00Z\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_16",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_5",
+        "name": "409 brakes at D2 (no skill)",
+        "method": "POST",
+        "url": "${[ base_url ]}/appointments",
+        "sortPriority": 15,
+        "headers": [
+          { "enabled": true, "name": "Content-Type", "value": "application/json" },
+          { "enabled": true, "name": "Idempotency-Key", "value": "${[ uuid.v4() ]}" }
+        ],
+        "urlParameters": [],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"customer_id\": \"${[ customer2 ]}\",\n  \"vehicle_id\": \"${[ vehicle3 ]}\",\n  \"dealership_id\": \"${[ d2 ]}\",\n  \"service_type_id\": \"${[ svc_brakes ]}\",\n  \"start\": \"${[ start ]}\"\n}"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_17",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_5",
+        "name": "404 unknown appointment",
+        "method": "GET",
+        "url": "${[ base_url ]}/appointments/00000000-0000-7000-8000-00000000ffff",
+        "sortPriority": 16,
+        "headers": [],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      },
+      {
+        "model": "http_request",
+        "id": "GENERATE_ID::HTTP_REQUEST_18",
+        "workspaceId": "GENERATE_ID::WORKSPACE_1",
+        "folderId": "GENERATE_ID::FOLDER_5",
+        "name": "422 malformed id",
+        "method": "GET",
+        "url": "${[ base_url ]}/appointments/not-a-uuid",
+        "sortPriority": 17,
+        "headers": [],
+        "urlParameters": [],
+        "bodyType": null,
+        "body": {}
+      }
+    ]
+  }
+}

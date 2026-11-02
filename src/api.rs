@@ -26,19 +26,6 @@ use crate::state::AppState;
 #[openapi(info(title = "Unified Service Scheduler", version = "0.1.0"))]
 struct ApiDoc;
 
-fn request_span(req: &Request<Body>) -> Span {
-    let route = req
-        .extensions()
-        .get::<MatchedPath>()
-        .map_or("unmatched", MatchedPath::as_str);
-    let request_id = req
-        .extensions()
-        .get::<RequestId>()
-        .and_then(|id| id.header_value().to_str().ok())
-        .unwrap_or_default();
-    tracing::info_span!("request", method = %req.method(), route, request_id)
-}
-
 pub fn router(state: AppState) -> Router {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(health::healthz))
@@ -63,4 +50,17 @@ pub fn router(state: AppState) -> Router {
         .merge(SwaggerUi::new("/docs").url("/openapi.json", api))
         .layer(middleware)
         .with_state(state)
+}
+
+fn request_span(req: &Request<Body>) -> Span {
+    let route = req
+        .extensions()
+        .get::<MatchedPath>()
+        .map_or("unmatched", MatchedPath::as_str);
+    let request_id = req
+        .extensions()
+        .get::<RequestId>()
+        .and_then(|id| id.header_value().to_str().ok())
+        .unwrap_or_default();
+    tracing::info_span!("request", method = %req.method(), route, request_id)
 }

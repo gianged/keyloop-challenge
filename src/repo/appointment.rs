@@ -20,57 +20,6 @@ pub enum InsertOutcome {
     KeyExists,
 }
 
-struct AppointmentRow {
-    id: Uuid,
-    customer_id: Uuid,
-    vehicle_id: Uuid,
-    dealership_id: Uuid,
-    service_type_id: Uuid,
-    bay_id: Uuid,
-    technician_id: Uuid,
-    start: DateTime<Utc>,
-    end: DateTime<Utc>,
-    status: String,
-    created_at: DateTime<Utc>,
-}
-
-impl TryFrom<AppointmentRow> for Appointment {
-    type Error = sqlx::Error;
-
-    fn try_from(row: AppointmentRow) -> Result<Self, Self::Error> {
-        let status = AppointmentStatus::parse(&row.status)
-            .ok_or_else(|| sqlx::Error::Decode("unknown appointment status".into()))?;
-        Ok(Self {
-            id: row.id,
-            customer_id: row.customer_id,
-            vehicle_id: row.vehicle_id,
-            dealership_id: row.dealership_id,
-            service_type_id: row.service_type_id,
-            bay_id: row.bay_id,
-            technician_id: row.technician_id,
-            slot: Slot {
-                start: row.start,
-                end: row.end,
-            },
-            status,
-            created_at: row.created_at,
-        })
-    }
-}
-
-fn classify(err: sqlx::Error) -> Result<InsertOutcome, sqlx::Error> {
-    let Some(db_err) = err.as_database_error() else {
-        return Err(err);
-    };
-    match (db_err.code().as_deref(), db_err.constraint()) {
-        (Some(EXCLUSION_VIOLATION), Some(BAY_OVERLAP)) => Ok(InsertOutcome::BayTaken),
-        (Some(EXCLUSION_VIOLATION), Some(TECHNICIAN_OVERLAP)) => Ok(InsertOutcome::TechnicianTaken),
-        (Some(EXCLUSION_VIOLATION), Some(VEHICLE_OVERLAP)) => Ok(InsertOutcome::VehicleTaken),
-        (Some(UNIQUE_VIOLATION), Some(IDEMPOTENCY_KEY_UNIQUE)) => Ok(InsertOutcome::KeyExists),
-        _ => Err(err),
-    }
-}
-
 pub async fn insert_appointment(
     conn: &mut PgConnection,
     req: &BookingRequest,
@@ -167,4 +116,55 @@ pub async fn cancel_appointment(
     .await?
     .map(Appointment::try_from)
     .transpose()
+}
+
+struct AppointmentRow {
+    id: Uuid,
+    customer_id: Uuid,
+    vehicle_id: Uuid,
+    dealership_id: Uuid,
+    service_type_id: Uuid,
+    bay_id: Uuid,
+    technician_id: Uuid,
+    start: DateTime<Utc>,
+    end: DateTime<Utc>,
+    status: String,
+    created_at: DateTime<Utc>,
+}
+
+impl TryFrom<AppointmentRow> for Appointment {
+    type Error = sqlx::Error;
+
+    fn try_from(row: AppointmentRow) -> Result<Self, Self::Error> {
+        let status = AppointmentStatus::parse(&row.status)
+            .ok_or_else(|| sqlx::Error::Decode("unknown appointment status".into()))?;
+        Ok(Self {
+            id: row.id,
+            customer_id: row.customer_id,
+            vehicle_id: row.vehicle_id,
+            dealership_id: row.dealership_id,
+            service_type_id: row.service_type_id,
+            bay_id: row.bay_id,
+            technician_id: row.technician_id,
+            slot: Slot {
+                start: row.start,
+                end: row.end,
+            },
+            status,
+            created_at: row.created_at,
+        })
+    }
+}
+
+fn classify(err: sqlx::Error) -> Result<InsertOutcome, sqlx::Error> {
+    let Some(db_err) = err.as_database_error() else {
+        return Err(err);
+    };
+    match (db_err.code().as_deref(), db_err.constraint()) {
+        (Some(EXCLUSION_VIOLATION), Some(BAY_OVERLAP)) => Ok(InsertOutcome::BayTaken),
+        (Some(EXCLUSION_VIOLATION), Some(TECHNICIAN_OVERLAP)) => Ok(InsertOutcome::TechnicianTaken),
+        (Some(EXCLUSION_VIOLATION), Some(VEHICLE_OVERLAP)) => Ok(InsertOutcome::VehicleTaken),
+        (Some(UNIQUE_VIOLATION), Some(IDEMPOTENCY_KEY_UNIQUE)) => Ok(InsertOutcome::KeyExists),
+        _ => Err(err),
+    }
 }

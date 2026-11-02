@@ -15,24 +15,6 @@ use crate::state::AppState;
 
 const KEEP_ALIVE: Duration = Duration::from_secs(15);
 
-struct Connection(Uuid);
-
-impl Drop for Connection {
-    fn drop(&mut self) {
-        tracing::info!(dealership_id = %self.0, "sse disconnected");
-    }
-}
-
-fn to_sse(event: Event) -> Result<SseEvent, axum::Error> {
-    let name = match event.kind {
-        EventKind::Booked => "booked",
-        EventKind::Cancelled => "cancelled",
-    };
-    SseEvent::default()
-        .event(name)
-        .json_data(AppointmentEventPayload::from(event))
-}
-
 #[utoipa::path(
     get,
     path = "/dealerships/{id}/events",
@@ -76,4 +58,22 @@ pub async fn stream(
         }
     };
     Ok(Sse::new(events).keep_alive(KeepAlive::new().interval(KEEP_ALIVE)))
+}
+
+struct Connection(Uuid);
+
+impl Drop for Connection {
+    fn drop(&mut self) {
+        tracing::info!(dealership_id = %self.0, "sse disconnected");
+    }
+}
+
+fn to_sse(event: Event) -> Result<SseEvent, axum::Error> {
+    let name = match event.kind {
+        EventKind::Booked => "booked",
+        EventKind::Cancelled => "cancelled",
+    };
+    SseEvent::default()
+        .event(name)
+        .json_data(AppointmentEventPayload::from(event))
 }

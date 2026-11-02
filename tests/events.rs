@@ -11,10 +11,6 @@ use sqlx::PgPool;
 const WAIT: Duration = Duration::from_secs(2);
 const QUIET: Duration = Duration::from_millis(300);
 
-fn events_path(dealership: uuid::Uuid) -> String {
-    format!("/dealerships/{dealership}/events")
-}
-
 #[sqlx::test(migrations = false)]
 async fn booked_event_after_create(pool: PgPool) {
     load_seed(&pool).await;
@@ -94,4 +90,8 @@ async fn shutdown_closes_stream(pool: PgPool) {
     assert!(!sse.closed(QUIET).await);
     shutdown.cancel();
     assert!(sse.closed(WAIT).await);
+}
+
+fn events_path(dealership: uuid::Uuid) -> String {
+    format!("/dealerships/{dealership}/events")
 }

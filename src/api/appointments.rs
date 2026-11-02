@@ -12,16 +12,6 @@ use crate::state::AppState;
 const IDEMPOTENCY_KEY_HEADER: &str = "idempotency-key";
 const IDEMPOTENCY_KEY_MAX_LEN: usize = 255;
 
-fn idempotency_key(headers: &HeaderMap) -> Result<String, AppError> {
-    headers
-        .get(IDEMPOTENCY_KEY_HEADER)
-        .and_then(|value| value.to_str().ok())
-        .map(str::trim)
-        .filter(|key| !key.is_empty() && key.len() <= IDEMPOTENCY_KEY_MAX_LEN)
-        .map(str::to_owned)
-        .ok_or(AppError::Unprocessable("invalid_idempotency_key"))
-}
-
 #[utoipa::path(
     post,
     path = "/appointments",
@@ -92,4 +82,14 @@ pub async fn cancel(
     PathId(id): PathId,
 ) -> Result<Json<AppointmentResponse>, AppError> {
     Ok(Json(service::cancel(&state, id).await?.into()))
+}
+
+fn idempotency_key(headers: &HeaderMap) -> Result<String, AppError> {
+    headers
+        .get(IDEMPOTENCY_KEY_HEADER)
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|key| !key.is_empty() && key.len() <= IDEMPOTENCY_KEY_MAX_LEN)
+        .map(str::to_owned)
+        .ok_or(AppError::Unprocessable("invalid_idempotency_key"))
 }

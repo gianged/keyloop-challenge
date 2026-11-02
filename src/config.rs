@@ -3,6 +3,16 @@ use std::fmt::Display;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
+#[derive(Clone)]
+pub struct Config {
+    pub database_url: String,
+    pub bind_addr: SocketAddr,
+    pub db_pool_max: u32,
+    pub slot_step_minutes: u32,
+    pub lock_timeout_ms: u64,
+    pub log_format: LogFormat,
+}
+
 #[derive(Clone, Copy)]
 pub enum LogFormat {
     Json,
@@ -21,25 +31,6 @@ impl FromStr for LogFormat {
     }
 }
 
-#[derive(Clone)]
-pub struct Config {
-    pub database_url: String,
-    pub bind_addr: SocketAddr,
-    pub db_pool_max: u32,
-    pub slot_step_minutes: u32,
-    pub lock_timeout_ms: u64,
-    pub log_format: LogFormat,
-}
-
-fn optional<T>(name: &str, default: &str) -> Result<T, String>
-where
-    T: FromStr,
-    T::Err: Display,
-{
-    let raw = env::var(name).unwrap_or_else(|_| default.to_owned());
-    raw.parse().map_err(|e| format!("{name}: {e}"))
-}
-
 impl Config {
     pub fn from_env() -> Result<Self, String> {
         let slot_step_minutes: u32 = optional("SLOT_STEP_MINUTES", "30")?;
@@ -55,4 +46,13 @@ impl Config {
             log_format: optional("LOG_FORMAT", "pretty")?,
         })
     }
+}
+
+fn optional<T>(name: &str, default: &str) -> Result<T, String>
+where
+    T: FromStr,
+    T::Err: Display,
+{
+    let raw = env::var(name).unwrap_or_else(|_| default.to_owned());
+    raw.parse().map_err(|e| format!("{name}: {e}"))
 }

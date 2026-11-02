@@ -11,51 +11,6 @@ use uuid::Uuid;
 const CONTENDERS: usize = 10;
 const D1_OIL_CAPACITY: usize = 2;
 
-async fn fire_all(
-    requests: Vec<(Router, axum::http::Request<axum::body::Body>)>,
-) -> Vec<(StatusCode, Value)> {
-    let mut set = JoinSet::new();
-    for (router, request) in requests {
-        set.spawn(async move { call(&router, request).await });
-    }
-    set.join_all().await
-}
-
-fn count(results: &[(StatusCode, Value)], status: StatusCode) -> usize {
-    results.iter().filter(|(s, _)| *s == status).count()
-}
-
-async fn confirmed_at(
-    pool: &PgPool,
-    dealership: Uuid,
-    start: chrono::DateTime<chrono::Utc>,
-) -> i64 {
-    sqlx::query_scalar(
-        "SELECT count(*) FROM appointment \
-         WHERE dealership_id = $1 AND status = 'confirmed' AND lower(slot) = $2",
-    )
-    .bind(dealership)
-    .bind(start)
-    .fetch_one(pool)
-    .await
-    .unwrap()
-}
-
-fn contend_for_slot(
-    pairs: &[(Uuid, Uuid)],
-    start: chrono::DateTime<chrono::Utc>,
-    router_for: impl Fn() -> Router,
-) -> Vec<(Router, axum::http::Request<axum::body::Body>)> {
-    pairs
-        .iter()
-        .enumerate()
-        .map(|(i, &(customer, vehicle))| {
-            let body = booking(customer, vehicle, D1, OIL, start);
-            (router_for(), post("/appointments", &format!("k{i}"), &body))
-        })
-        .collect()
-}
-
 #[sqlx::test(migrations = false)]
 async fn mutex_and_constraint_grant_exactly_capacity(pool: PgPool) {
     load_seed(&pool).await;
@@ -109,4 +64,49 @@ async fn same_idempotency_key_creates_once(pool: PgPool) {
     let ids: Vec<&Value> = results.iter().map(|(_, body)| &body["id"]).collect();
     assert!(ids.windows(2).all(|pair| pair[0] == pair[1]));
     assert_eq!(confirmed_at(&pool, D1, start).await, 1);
+}
+
+fn contend_for_slot(
+    pairs: &[(Uuid, Uuid)],
+    start: chrono::DateTime<chrono::Utc>,
+    router_for: impl Fn() -> Router,
+) -> Vec<(Router, axum::http::Request<axum::body::Body>)> {
+    pairs
+        .iter()
+        .enumerate()
+        .map(|(i, &(customer, vehicle))| {
+            let body = booking(customer, vehicle, D1, OIL, start);
+            (router_for(), post("/appointments", &format!("k{i}"), &body))
+        })
+        .collect()
+}
+
+async fn fire_all(
+    requests: Vec<(Router, axum::http::Request<axum::body::Body>)>,
+) -> Vec<(StatusCode, Value)> {
+    let mut set = JoinSet::new();
+    for (router, request) in requests {
+        set.spawn(async move { call(&router, request).await });
+    }
+    set.join_all().await
+}
+
+fn count(results: &[(StatusCode, Value)], status: StatusCode) -> usize {
+    results.iter().filter(|(s, _)| *s == status).count()
+}
+
+async fn confirmed_at(
+    pool: &PgPool,
+    dealership: Uuid,
+    start: chrono::DateTime<chrono::Utc>,
+) -> i64 {
+    sqlx::query_scalar(
+        "SELECT count(*) FROM appointment \
+         WHERE dealership_id = $1 AND status = 'confirmed' AND lower(slot) = $2",
+    )
+    .bind(dealership)
+    .bind(start)
+    .fetch_one(pool)
+    .await
+    .unwrap()
 }
