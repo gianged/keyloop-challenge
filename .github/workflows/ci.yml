@@ -60,6 +60,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://keyloop:keyloop@localhost:5432/keyloop
+      SQLX_OFFLINE: "true"
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
