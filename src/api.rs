@@ -46,6 +46,7 @@ pub fn router(state: AppState) -> Router {
         .routes(routes!(appointments::get))
         .routes(routes!(appointments::cancel))
         .routes(routes!(availability::list))
+        .routes(routes!(events::stream))
         .split_for_parts();
 
     let middleware = ServiceBuilder::new()

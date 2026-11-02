@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
 use tokio::sync::OwnedMutexGuard;
+use tokio::time;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -59,7 +60,7 @@ impl Locks {
                 .unwrap_or_else(PoisonError::into_inner);
             Arc::clone(entries.entry(key).or_default())
         };
-        match tokio::time::timeout(self.inner.timeout, entry.lock_owned()).await {
+        match time::timeout(self.inner.timeout, entry.lock_owned()).await {
             Ok(guard) => Ok(LockGuard {
                 guard: Some(guard),
                 inner: Arc::clone(&self.inner),

@@ -3,13 +3,14 @@ use std::time::Duration;
 
 use keyloop_challenge::config::Config;
 use keyloop_challenge::domain::SlotGrid;
-use keyloop_challenge::infra::Locks;
+use keyloop_challenge::infra::{EventBus, Locks};
 use keyloop_challenge::state::AppState;
 use keyloop_challenge::{api, telemetry};
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tokio::signal::unix::{SignalKind, signal};
+use tokio_util::sync::CancellationToken;
 
 const CONNECT_ATTEMPTS: u32 = 10;
 
@@ -47,14 +48,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "listening");
 
+    let shutdown = CancellationToken::new();
     let state = AppState {
         pool,
         locks: Locks::new(Duration::from_millis(config.lock_timeout_ms)),
         grid: SlotGrid::new(config.slot_step_minutes),
+        bus: EventBus::new(),
+        shutdown: shutdown.clone(),
     };
     let app = api::router(state);
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(async move {
+            shutdown_signal().await;
+            shutdown.cancel();
+        })
         .await?;
 
     tracing::info!("stopped");
