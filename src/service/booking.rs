@@ -3,7 +3,7 @@ use std::time::Instant;
 use chrono::Utc;
 use sqlx::{PgConnection, PgPool};
 
-use crate::domain::{Appointment, BookingRequest, Slot, SlotGrid};
+use crate::domain::{Appointment, BookingRequest, Event, Slot, SlotGrid};
 use crate::error::AppError;
 use crate::repo::{self, InsertOutcome};
 use crate::state::AppState;
@@ -133,6 +133,16 @@ pub async fn book(state: &AppState, req: BookingRequest) -> Result<Booking, AppE
     let mut attempts = 0;
     let result = place(&state.pool, &req, &mut attempts).await;
     let tx_ms = working.elapsed().as_millis();
+
+    if let Ok(Booking {
+        appointment,
+        outcome: Outcome::Created,
+    }) = &result
+    {
+        state
+            .bus
+            .publish(appointment.dealership_id, Event::booked(appointment));
+    }
 
     let outcome = match &result {
         Ok(booking) => Some(booking.outcome.label()),
