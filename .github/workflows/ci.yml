@@ -44,6 +44,22 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: keyloop
+          POSTGRES_PASSWORD: keyloop
+          POSTGRES_DB: keyloop
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keyloop -d keyloop"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keyloop:keyloop@localhost:5432/keyloop
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
