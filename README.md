@@ -26,8 +26,18 @@ For a ready-made request collection, import `docs/yaak.json`.
 availability -> book -> (events pushed over SSE) -> get / cancel
 ```
 
-- Booking claims a bay and a qualified technician for the whole service duration.
-- No double-booking: Postgres exclusion constraints guarantee it. The in-process lock only makes it faster.
+**Booking** (`POST /appointments`)
+1. Validate: `start` is on the slot grid (default 30m) and not in the past. Otherwise 422.
+2. Take the per-dealership lock. If it times out, 503 `busy`.
+3. Idempotency: if this customer already used the `Idempotency-Key`, return the original booking (200). A different body with the same key gets 422.
+4. Check that the service type, customer, vehicle (owned by the customer) and dealership exist. Otherwise 422.
+5. Find free bays and free technicians with the required skill, then try inserting each pair until one succeeds.
+6. Postgres exclusion constraints on bay, technician and vehicle (confirmed rows only) decide the winner. Nothing free → 409 `slot_unavailable`. Vehicle already booked → 409 `vehicle_unavailable`.
+7. New booking: 201 plus a `booked` SSE event.
+
+**Cancel** sets the status to `cancelled`. The constraints only cover confirmed rows, so the slot opens up right away. Calling it twice is safe (200), and it emits a `cancelled` event.
+
+No double-booking: the database guarantees it. The in-process lock only cuts down on wasted inserts.
 
 # My story with AI
 
